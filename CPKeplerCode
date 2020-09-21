@@ -1,0 +1,205 @@
+#1) Set up your program to read the provided file CPKeplerOrbitData.txt
+#containing solar system data,
+#to read the values of a,e for the solar system object X. Test your code using comet Encke
+#The following libraries are needed as we will see wihin the following code
+import numpy as np
+import math as m
+import matplotlib.pyplot as plt
+from prettytable import PrettyTable
+
+#step 1- read the .txt file,
+# colum 1- planet, column 2, semi major axis, column 3 period, column 4- eccentricity
+#This open() function allows us to open the file, all we have to do is specify the path 
+CPKepler_data = open(r'C:/Users/NIZZ/Desktop/Astro 4900/CPKeplerOrbitalData_.txt','r')
+
+#reading and looking at the data- The following bit of code allows us to look at the contents of 
+# the .txt file. Here I am employing the .readlines() function and creating a for loop to look through
+# entire .txt file 
+for line in CPKepler_data.readlines():     
+    CPKepler_data
+    print(line)
+
+#Converting the data into a lists of lists stored into a variable 'data'
+with open(r'C:/Users/NIZZ/Desktop/Astro 4900/CPKeplerOrbitalData_.txt','r') as g:
+    data = [line.strip().split() for line in g.readlines()]
+print(data)
+
+ #In the following lines we are splitting the lists of lists into a single list, as this is a more useful 
+#form of the data. We use a for loop to loop through the desired values of the data. 
+#Column 1 list of Planet values 
+planets=[0]*10
+for i in range(1,11):
+    planets[i-1]= data[i][0]
+print(planets)
+
+ #Column 2 list of semi-major values. Note here that when importing data by default they are string values
+#so we add the extra line converting these values to numeric values (which we will need for calculations)
+semimajor=[0]*10
+for i in range(1,11):
+    semimajor[i-1]= data[i][1]
+    semimajor[i-1]= float(semimajor[i-1])
+print(semimajor)
+
+#Column 3 List of Orbital period values  
+period =[0]*10
+for i in range(1,11):
+    period[i-1]= data[i][2]
+    period[i-1]= float(period[i-1])
+print(period)
+
+#Column 4- List of eccentricity values 
+eccentricity =[0]*10
+for i in range(1,11):
+    eccentricity[i-1]= data[i][3]
+    eccentricity[i-1]= float(eccentricity[i-1])
+print(eccentricity)
+
+#We are only interested in the values for comet Encke so we assign variables to these values 
+cometEncke_a= semimajor[4]
+cometEncke_p= period[4]
+cometEncke_e= eccentricity[4]
+print(cometEncke_a)
+print(cometEncke_p)
+print(cometEncke_e)
+
+#Finding (r,theta) the radial and angular components of comet Encke 
+#computing radial and angular components for the N=20 case. The following is a list of theta values
+# in radians and equally spaced.
+n=20
+theta=[18]*n
+for i in range(0,len(theta)):
+    theta[i]= (0.017*i)*(theta[i])
+    theta[i]= truncate(theta[i],3)
+print(theta) 
+
+
+#computing the radial components, Here we use the math libraries m.pow() and m.cos() functions in order to 
+#calculate the radial components. A for loop is employed to cycle through the theta list and find corresponding
+#radial values. The equation is split within the forloop to avoide computational errors.
+r=[0]*20
+for i in range(0,len(theta)): 
+    A= (cometEncke_a)*(1-(m.pow(cometEncke_e,2))) # This is A= a(1-e^2)
+    B= 1+(cometEncke_e)*(m.cos(theta[i]))         #This is B= 1+ecos(theta)
+    r[i]= (A/B) 
+    r[i]= truncate(r[i],3)                        #This is used to limit to 3 decimal digits of precision
+print(r)
+
+#Finding the velocity components along the comet Encke's orbit 
+#first we convert the units of the radial components from au to meters. 
+r_m=[0]*20
+for i in range(0,len(r_m)):
+    r_m[i] = (float(r[i]))*(float(1.497)*(m.pow(10,11)))  
+print(r_m)
+
+#Now using the equation for the Velocity of a ellipse and declaring variables for the gravitational constant G, and the mass 
+# of the sun 
+comet_v=[0]*20  #declaring velocity vector
+G= 6.67*(m.pow(10,-11))  #Graviation constant
+M= 1.98*(m.pow(10,30))   #Mass of sun
+
+#Now creating a for loop to find the velocity components
+# C and D are constants calculated before hand to simplify the calculation run time within the for loop. 
+C=G*M  
+D= (1/(comet_a*(1.496)*(m.pow(10,11)))) #comet a converted from au to m
+# for loop used to find velocity vector components 
+for i in range(0,len(r)):
+    E= 2/(float(r_m[i]))   # E is 2/r
+    F= (C*(E-D))           # F is GM(2/r - 1/a)
+    comet_v[i]= (m.sqrt(F))*0.001   #Taking the square root to find v
+    comet_v[i]=truncate(comet_v[i],3)  #Taking 3 decimal places of precision 
+print(comet_v) 
+
+#plotting in polar coordinates, the orbit of the comet Encke is plotted below.
+#The matplotlib libraries functions are used to plot (r,theta)
+plt.polar(theta,r,'o')
+plt.title('Comet Encke orbit for N=20')
+plt.xlabel('radial distance (au)')
+plt.ylabel('angle theta (radians)')
+plt.axis([0,4.5,0,10]) 
+
+
+#Creating a table for the coordinates (r, theta) as well as corresponding velocity values along the orbit of comet Encke.
+CometOrbit=PrettyTable(["N","radial au","theta radians",'velocity km/s'])
+for i in range(0,20):
+    CometOrbit.add_row([(i+1),r[i],theta[i],comet_v[i]]) 
+print(CometOrbit)
+
+#Note this table verifies that the velocity is fastest near periapse and slowest near apoapse.
+# periapse being at N=1, and apoapse at N=11
+
+#This function is used throughout the code to give the desired levels of precision in calculations.
+def truncate(number, decimals=0):
+    """
+    Returns a value truncated to a specific number of decimal places.
+    """
+    if not isinstance(decimals, int):
+        raise TypeError("decimal places must be an integer.")
+    elif decimals < 0:
+        raise ValueError("decimal places has to be 0 or more.")
+    elif decimals == 0:
+        return m.trunc(number)
+
+    factor = 10.0 ** decimals
+    return m.trunc(number * factor) / factor
+
+
+#The following is a repeat of the previous code, for the N=30 case for 30 points along Encke comets
+#orbit each point being equally spaced. 
+#Finding (r,theta) the radial and angular components of comet Encke 
+#computing radial and angular components 
+n=30
+theta_=[12]*n
+for i in range(0,len(theta_)):
+    theta_[i]= (0.017*i)*(theta_[i])
+    theta_[i]= truncate(theta_[i],3)
+print(theta_) 
+
+#computing the radial components
+r_=[0]*30
+for i in range(0,len(theta_)): 
+    A= (comet_a)*(1-(m.pow(comet_e,2)))
+    B= 1+(comet_e)*(m.cos(theta_[i]))
+    r_[i]= (A/B) 
+    r_[i]= truncate(r_[i],3)
+print(r_)
+
+#Finding the velocity components along the comet Encke's orbit 
+#first we convert the units of the radial components from au to meters. 
+r_m_=[0]*30
+for i in range(0,len(r_m_)):
+    r_m_[i] = (float(r_[i]))*(float(1.497)*(m.pow(10,11)))   
+print(r_m)
+
+#Now using the equation for the Velocity of a ellipse and declaring variables for the gravitational constant G, and the mass 
+# of the sun 
+comet_v_=[0]*30
+G= 6.67*(m.pow(10,-11))
+M= 1.98*(m.pow(10,30))
+
+
+#Now creating a for loop to find the velocity components
+C=G*M
+D= (1/(comet_a*(1.496)*(m.pow(10,11))))
+for i in range(0,len(r_)):
+    E= 2/(float(r_m_[i]))
+    F= (C*(E-D))
+    comet_v_[i]= (m.sqrt(F))*0.001
+    comet_v_[i]=truncate(comet_v_[i],3)
+print(comet_v_) 
+
+#plotting in polar coordinates, the orbit of the comet Encke 
+plt.polar(theta_,r_,'o')
+plt.title('Comet Encke orbit for N=30')
+plt.xlabel('radial distance au')
+plt.ylabel('angle theta (radians)')
+plt.axis([0,4.5,0,3]) 
+
+
+#Creating a table for the coordinates (r, theta) as well as corresponding velocity values along the orbit of comet Encke.
+CometOrbit=PrettyTable(["N","radial au","theta radians",'velocity km/s'])
+for i in range(0,30):
+    CometOrbit.add_row([(i+1),r_[i],theta_[i],comet_v_[i]])  
+print(CometOrbit)
+
+#Note this table verifies that the velocity is fastest near periapse and slowest near apoapse.
+# periapse being at N=1, and apoapse at N=16
